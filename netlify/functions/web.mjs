@@ -1,17 +1,20 @@
+import serverless from "serverless-http";
 import express from "express";
 import bodyParser from "body-parser";
 import path from "path";
 import axios from "axios";
 
 const app = express();
-const API_URL = "/.netlify/functions/api"; 
+const isDev = process.env.NETLIFY_DEV === "true";
+const host  = isDev ? "http://localhost:8888" : `https://${process.env.URL}`;
+const API_URL = `${host}/api`;
 
 // --- Configure EJS views & static assets ---
 
 app.set("view engine", "ejs");
-app.set("views",path.join(process.cwd(), "netlify", "functions", "web", "views"));
+app.set("views",path.join(process.cwd(), "netlify", "functions", "views"));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(process.cwd(), "netlify", "functions", "web", "public")));
+app.use(express.static(path.join(process.cwd(), "netlify", "functions", "public")));
 app.use(bodyParser.json());
 
 // --- Routes ---
@@ -27,7 +30,7 @@ app.get("/", async (req, res) => {
 });
 
 // Show single post by id
-app.get("/api/posts/:id", async (req, res) => {
+app.get("/posts/:id", async (req, res) => {
   try {
     const response = await axios.get(`${API_URL}/posts/${req.params.id}`);
     const { data: post } = response;  // destructuring 
@@ -39,12 +42,12 @@ app.get("/api/posts/:id", async (req, res) => {
 });
 
 // New post form
-app.get("/api/new", (req, res) => {
-  res.render("modify.ejs", { heading: "New Post", submit: "Create Post",post: null });
+app.get("/new", (req, res) => {
+  res.render("modify.ejs", { heading: "New Post", submit: "Create Post"});
 });
 
 // Edit post form
-app.get("/api/edit/:id", async (req, res) => {
+app.get("/edit/:id", async (req, res) => {
   try {
     const response = await axios.get(`${API_URL}/posts/${req.params.id}`);
     const { data: post } = response;  // destructuring 
@@ -59,7 +62,7 @@ app.get("/api/edit/:id", async (req, res) => {
 });
 
 // Create new post
-app.post("/api/posts", async (req, res) => {
+app.post("/posts", async (req, res) => {
   try {
     await axios.post(`${API_URL}/posts`, req.body);
     res.redirect("/");
@@ -69,7 +72,7 @@ app.post("/api/posts", async (req, res) => {
 });
 
 // Update a post
-app.post("/api/posts/:id", async (req, res) => {
+app.post("/posts/:id", async (req, res) => {
   try {
     const response = await axios.patch(
       `${API_URL}/posts/${req.params.id}`,
@@ -82,7 +85,7 @@ app.post("/api/posts/:id", async (req, res) => {
 });
 
 // Delete a post
-app.get("/api/posts/delete/:id", async (req, res) => {
+app.get("/posts/delete/:id", async (req, res) => {
   try {
     await axios.delete(`${API_URL}/posts/${req.params.id}`);
     res.redirect("/");
@@ -91,4 +94,4 @@ app.get("/api/posts/delete/:id", async (req, res) => {
   }
 });
 
-export {app};
+export const handler = serverless(app);
