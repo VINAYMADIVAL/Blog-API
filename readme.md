@@ -141,10 +141,11 @@ Benefits:
 
 - 🛣️ `/api/*` → `api.mjs`, passes only the `:splat` suffix (`/posts`, `/posts/1`).
 - 🖥️ All other routes → `web.mjs`, with `req.path` reflecting the original path (e.g. `/new`).
-#### If you face `Error fetching posts: Cannot find module 'ejs'` then you can use the solution below otherwise netlify will handle everything
+### When hosting on Netlify you may face Errors 
+#### #1. `Error fetching posts: Cannot find module 'ejs'` then you can use the solution below otherwise netlify will handle everything
 - `external_node_modules` tells Netlify: “Don’t try to bundle these just include them from node_modules in the function ZIP.”
 
-#### If you face `Error: Failed to lookup view "index" in views directory "/var/task/netlify/functions/views" at Function.render` then you can use the solution below otherwise netlify will handle everything
+#### #2. `Error: Failed to lookup view "index" in views directory "/var/task/netlify/functions/views" at Function.render` then you can use the solution below otherwise netlify will handle everything
 - `included_files` This ensures that Netlify bundles your EJS templates and static assets with your web function during deploy.
 ---
 ## API Documentation
