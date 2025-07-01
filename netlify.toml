@@ -2,6 +2,15 @@
   functions = "netlify/functions"
   command   = "echo 'nothing to build'"
 
+[functions]
+  external_node_modules = [
+    "express",
+    "ejs",
+    "axios",
+    "body-parser",
+    "serverless-http"
+  ]
+  
 [[redirects]]
   # API calls go to the API function
   from = "/api/*"
