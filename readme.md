@@ -5,7 +5,7 @@ A fully serverless Blog application using Express.js, EJS, and Netlify Functions
 - ✨ **API Function** (`api.mjs`): Handles JSON-based CRUD for blog posts.
 - 🎨 **Web Function** (`web.mjs`): Renders EJS templates for user-facing pages and communicates with the API via HTTP.
 
-Check-out my Blog web app [here]().
+Check-out my Blog web app [here](https://dayblogs.netlify.app/).
 ---
 
 ## 📖 Table of Contents
@@ -110,22 +110,43 @@ Benefits:
   functions = "netlify/functions"
   command   = "echo 'nothing to build'"
 
+[functions]
+  external_node_modules = [
+    "express",
+    "ejs",
+    "axios",
+    "body-parser",
+    "serverless-http"
+  ]
+
+[functions."web"]
+  included_files = [
+    "netlify/functions/views/**",
+    "netlify/functions/public/**"
+  ]
+  
 [[redirects]]
-  from   = "/api/*"
-  to     = "/.netlify/functions/api/:splat"
+  # API calls go to the API function
+  from = "/api/*"
+  to   = "/.netlify/functions/api/:splat"
   status = 200
 
 [[redirects]]
-  from   = "/*"
-  to     = "/.netlify/functions/web"
+  # Everything else goes to your web server function
+  from = "/*"
+  to   = "/.netlify/functions/web"
   status = 200
+
 ```
 
 - 🛣️ `/api/*` → `api.mjs`, passes only the `:splat` suffix (`/posts`, `/posts/1`).
 - 🖥️ All other routes → `web.mjs`, with `req.path` reflecting the original path (e.g. `/new`).
+#### If you face `Error fetching posts: Cannot find module 'ejs'` then you can use the solution below otherwise netlify will handle everything
+- `external_node_modules` tells Netlify: “Don’t try to bundle these just include them from node_modules in the function ZIP.”
 
+#### If you face `Error: Failed to lookup view "index" in views directory "/var/task/netlify/functions/views" at Function.render` then you can use the solution below otherwise netlify will handle everything
+- `included_files` This ensures that Netlify bundles your EJS templates and static assets with your web function during deploy.
 ---
-
 ## API Documentation
 
 Base URL (local): `http://localhost:8888/api`
@@ -156,7 +177,7 @@ curl http://localhost:8888/api/posts
 
 ---
 
-## Troubleshooting & Tips ⚙️🛠️📝
+## Troubleshooting & Tips 
 
 - ⚠️ **404 on API**: Ensure your `api.mjs` is defined correctly and that your redirect rule uses `:splat` so Express sees clean paths.
 - 🔀 **Unexpected ****\`\`**** prefix**: Remember `:splat` alone doesn’t strip the `/api` prefix in Netlify Dev—you must either use `stripBasePath: true` or write routes as `/api/posts` (or use middleware to remove it).
@@ -170,7 +191,15 @@ curl http://localhost:8888/api/posts
 ---
 
 
-## Note 📌
+## Notice 📌
+### didn't find answers for  your questions ❓well it might be here.
+#### #1. Why does `/new` just work, but `/api/posts` requires us to manually prefix routes with `/api` inside `api.mjs`
+
+When you visit `/new`, it’s correctly handled by the `web` function thanks to the redirect rule:  
+```toml
+from = "/*"
+to   = "/.netlify/functions/web"
+```
 The Promise of `:splat`
 When we write this in netlify.toml:
 ```bash
@@ -179,7 +208,17 @@ When we write this in netlify.toml:
    to   = "/.netlify/functions/api/:splat"
    status = 200
 ```
-What should happen is:
+However, when you send a request to /api/posts, even though you have this rule:
+
+```toml
+from = "/api/*"
+to   = "/.netlify/functions/api/:splat"
+```
+…the request that reaches `api.mjs` still includes the `/api` prefix (`/api/posts`) instead of `/posts`, so you have to define routes like `app.get("/api/posts")` instead of `app.get("/posts")`.
+
+Why does this happen? Why isn’t the `/api` prefix stripped like it is for `/new`?
+
+Here's what should happen is:
 - Browser requests `/api/posts`
 - Netlify captures `posts` as `:splat`
 - Rewrites to: `/.netlify/functions/api/posts`
@@ -203,4 +242,40 @@ req.path === "/api/posts"
 That’s why for all routes in api.mjs you were forced to write:
 ```bash
 app.get("/api/posts", ...)  // not /posts
+```
+If you really want req.path to be `/posts`, there are two valid and working solutions:
+#### Option 1: Use `stripBasePath` in `serverless-http` in `api.mjs`
+```js
+export const handler = serverless(app, {
+  request: {
+    stripBasePath: true
+  }
+});
+```
+#### Option 2: Manually strip `/api` prefix
+You can add a middleware in `api.mjs`:
+```js
+app.use((req, res, next) => {
+  if (req.url.startsWith("/api")) {
+    req.url = req.url.replace("/api", "") || "/";
+  }
+  next();
+});
+```
+So then you can write:
+```js
+app.get("/posts", ...)  // works now
+```
+#### Also if you remove `:splat`
+```toml
+[[redirects]]
+from = "/api/*"
+to   = "/.netlify/functions/api"
+```
+Then all requests go to `/.netlify/functions/api`, but Netlify passes `req.path = "/api/posts"` into your function.
+
+Now you must write:
+```js
+app.get("/api/posts", ...)  
+
 ```
