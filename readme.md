@@ -244,7 +244,7 @@ That’s why for all routes in api.mjs you were forced to write:
 ```bash
 app.get("/api/posts", ...)  // not /posts
 ```
-If you really want req.path to be `/posts`, there are two valid and working solutions:
+⚠⚠ If you really want req.path to be `/posts`, there are two valid and working solutions:
 #### Option 1: Use `stripBasePath` in `serverless-http` in `api.mjs`
 ```js
 export const handler = serverless(app, {
