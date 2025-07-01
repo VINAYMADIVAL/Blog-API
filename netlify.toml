@@ -10,6 +10,12 @@
     "body-parser",
     "serverless-http"
   ]
+
+[functions."web"]
+  included_files = [
+    "netlify/functions/views/**",
+    "netlify/functions/public/**"
+  ]
   
 [[redirects]]
   # API calls go to the API function
