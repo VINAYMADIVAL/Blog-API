@@ -5,6 +5,7 @@ A fully serverless Blog application using Express.js, EJS, and Netlify Functions
 - ✨ **API Function** (`api.mjs`): Handles JSON-based CRUD for blog posts.
 - 🎨 **Web Function** (`web.mjs`): Renders EJS templates for user-facing pages and communicates with the API via HTTP.
 
+Check-out my Blog web app [here]().
 ---
 
 ## 📖 Table of Contents
@@ -168,3 +169,38 @@ curl http://localhost:8888/api/posts
 
 ---
 
+
+## Note 📌
+The Promise of `:splat`
+When we write this in netlify.toml:
+```bash
+   [[redirects]]
+   from = "/api/*"
+   to   = "/.netlify/functions/api/:splat"
+   status = 200
+```
+What should happen is:
+- Browser requests `/api/posts`
+- Netlify captures `posts` as `:splat`
+- Rewrites to: `/.netlify/functions/api/posts`
+- Your Lambda (`api.mjs`) receives:
+      - `req.path === "/posts"`
+      - NOT `/api/posts`
+
+✅ This is what the docs say should happen
+❌ But in reality, this does not happen in Netlify Dev the way you'd expect
+
+When running locally with `netlify dev`, what actually happens is:
+- You request `/api/posts`
+- Netlify Dev does rewrite to `/.netlify/functions/api/posts`
+- BUT the Express `req.path` is still seen as `/api/posts`, not `/posts`
+
+Even though your function was mounted at /api, it still sees the full original path — prefix and all.
+So, despite using :splat, your Express app still sees:
+```bash
+req.path === "/api/posts"
+```
+That’s why for all routes in api.mjs you were forced to write:
+```bash
+app.get("/api/posts", ...)  // not /posts
+```

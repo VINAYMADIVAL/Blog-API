@@ -6,9 +6,7 @@ import axios from "axios";
 
 const app = express();
 const isDev = process.env.NETLIFY_DEV === "true";
-const host  = isDev ? "http://localhost:8888" : `${process.env.URL}`;
-const API_URL = `${host}/api`;
-// --- Configure EJS views & static assets ---
+const API_URL = isDev ? "http://localhost:8888/api" : `${process.env.URL}/api`;
 
 app.set("view engine", "ejs");
 app.set("views",path.join(process.cwd(), "netlify", "functions", "views"));
@@ -24,6 +22,7 @@ app.get("/", async (req, res) => {
      const { data: posts } = response;  // destructuring 
     res.render("index", { posts });
   } catch (err) {
+    console.error("Error fetching posts:", err.message);
     res.status(500).json({ message: "Error fetching posts" });
   }
 });
