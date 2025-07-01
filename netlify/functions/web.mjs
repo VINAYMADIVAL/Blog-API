@@ -8,11 +8,13 @@ const app = express();
 const isDev = process.env.NETLIFY_DEV === "true";
 const API_URL = isDev ? "http://localhost:8888/api" : `${process.env.URL}/api`;
 
+const FUNCTIONS_PATH = path.join(process.cwd(), "netlify", "functions");
+
 app.set("view engine", "ejs");
-app.set("views",path.join(process.cwd(), "netlify", "functions", "views"));
+app.set("views", path.join(FUNCTIONS_PATH, "views"));        
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(process.cwd(), "netlify", "functions", "public")));
 app.use(bodyParser.json());
+app.use(express.static(path.join(FUNCTIONS_PATH, "public"))); 
 
 // --- Routes ---
 // Home: list all posts
