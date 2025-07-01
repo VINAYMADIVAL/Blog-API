@@ -6,9 +6,8 @@ import axios from "axios";
 
 const app = express();
 const isDev = process.env.NETLIFY_DEV === "true";
-const host  = isDev ? "http://localhost:8888" : `https://${process.env.URL}`;
+const host  = isDev ? "http://localhost:8888" : `${process.env.URL}`;
 const API_URL = `${host}/api`;
-
 // --- Configure EJS views & static assets ---
 
 app.set("view engine", "ejs");
