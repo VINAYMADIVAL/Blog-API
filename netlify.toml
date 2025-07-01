@@ -1,0 +1,15 @@
+[build]
+  functions = "netlify/functions"
+  command   = "echo 'nothing to build'"
+
+[[redirects]]
+  # API calls go to the API function
+  from = "/api/*"
+  to   = "/.netlify/functions/api/:splat"
+  status = 200
+
+[[redirects]]
+  # Everything else goes to your web server function
+  from = "/*"
+  to   = "/.netlify/functions/web"
+  status = 200
